@@ -513,12 +513,13 @@ return view.extend({
 		o.value('2', _('BSS-transition-request with disassociation imminent'));
 		o.value('3', _('BSS-transition-request with disassociation imminent and timer'));
 		o.value('4', _('BSS-transition-request with disassociation imminent, timer and forced disassociation'));
+		o.default = '3';
 		o.rmempty = false;
 		o.editable = true;
 
 		o = s.taboption('settings', form.Value, 'reassociation_delay', _('Reassociation delay'), _('Timeout (s in "1024ms") a station is requested to avoid reassociation after bss transition'));
 		o.optional = true;
-		o.placeholder = 5000;
+		o.placeholder = 30;
 		o.datatype = 'uinteger';
 
 		o = s.taboption('settings', form.Value, 'aggressiveness_mac_list', _('Aggressiveness MAC list'), _('List of MACs (lower case) to set aggressiveness per station (ff:ff:ff:ff:ff,2)'));
@@ -605,7 +606,7 @@ return view.extend({
 
 		o = s.taboption('settings', form.Value, 'band_steering_interval', _('Band steering interval'), _('Attempting to steer clients to a higher frequency-band every n ms. A value of 0 disables band-steering.'));
 		o.optional = true;
-		o.placeholder = 120000;
+		o.placeholder = 30000;
 		o.datatype = 'uinteger';
 
 		o = s.taboption('settings', form.Value, 'band_steering_min_snr', _('Band steering min SNR'), _('Minimal SNR or absolute signal a device has to maintain over band_steering_interval to be steered to a higher frequency band.'));

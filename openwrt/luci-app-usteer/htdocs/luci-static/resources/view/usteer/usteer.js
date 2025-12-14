@@ -507,6 +507,24 @@ return view.extend({
 		o.placeholder = 60000;
 		o.datatype = 'uinteger';
 
+		o = s.taboption('settings', form.ListValue, 'aggressiveness', _('Aggressiveness'), _('Aggressiveness of BSS-transition-request to push a station to another node (AP or band)'));
+		o.value('0', _('No active transition'));
+		o.value('1', _('Passive BSS-transition-request'));
+		o.value('2', _('BSS-transition-request with disassociation imminent'));
+		o.value('3', _('BSS-transition-request with disassociation imminent and timer'));
+		o.value('4', _('BSS-transition-request with disassociation imminent, timer and forced disassociation'));
+		o.rmempty = false;
+		o.editable = true;
+
+		o = s.taboption('settings', form.Value, 'reassociation_delay', _('Reassociation delay'), _('Timeout (s in "1024ms") a station is requested to avoid reassociation after bss transition'));
+		o.optional = true;
+		o.placeholder = 5000;
+		o.datatype = 'uinteger';
+
+		o = s.taboption('settings', form.Value, 'aggressiveness_mac_list', _('Aggressiveness MAC list'), _('List of MACs (lower case) to set aggressiveness per station (ff:ff:ff:ff:ff,2)'));
+		o.optional = true;
+		o.datatype = 'string';
+
 		o = s.taboption('settings', form.Value, 'roam_process_timeout', _('Roam process timeout'), _('Timeout (in ms) after which a association following a disassociation is not seen as a roam'));
 		o.optional = true;
 		o.placeholder = 5000;
@@ -593,6 +611,11 @@ return view.extend({
 		o = s.taboption('settings', form.Value, 'band_steering_min_snr', _('Band steering min SNR'), _('Minimal SNR or absolute signal a device has to maintain over band_steering_interval to be steered to a higher frequency band.'));
 		o.optional = true;
 		o.placeholder = -60;
+		o.datatype = 'integer';
+
+		o = s.taboption('settings', form.Value, 'band_steering_signal_threshold', _('Band steering signal threshold'), _('Difference that the signal must be better compared to signal was on connection to node. Avoids conflicts between roaming and band-steering policies.'));
+		o.optional = true;
+		o.placeholder = 5;
 		o.datatype = 'integer';
 
 		o = s.taboption('settings', form.Value, 'link_measurement_interval', _('Link measurement interval'),

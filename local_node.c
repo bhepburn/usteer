@@ -149,6 +149,33 @@ usteer_handle_bss_tm_query(struct usteer_local_node *ln, struct blob_attr *msg)
 	return 1;
 }
 
+static const char *
+usteer_bss_tm_status_name(uint8_t status)
+{
+	switch (status) {
+	case 0:
+		return "accept";
+	case 1:
+		return "reject_unspecified";
+	case 2:
+		return "reject_insufficient_beacon";
+	case 3:
+		return "reject_insufficient_capacity";
+	case 4:
+		return "reject_undesired";
+	case 5:
+		return "reject_delay_request";
+	case 6:
+		return "reject_sta_candidate_list_provided";
+	case 7:
+		return "reject_no_suitable_candidates";
+	case 8:
+		return "reject_leaving_ess";
+	default:
+		return "unknown";
+	}
+}
+
 static int
 usteer_handle_bss_tm_response(struct usteer_local_node *ln, struct blob_attr *msg)
 {
@@ -190,22 +217,26 @@ usteer_handle_bss_tm_response(struct usteer_local_node *ln, struct blob_attr *ms
 		uint64_t age_ms = current_time - si->bss_transition_request_timestamp;
 
 		MSG(VERBOSE,
-		    "bss transition response received sta=" MAC_ADDR_FMT " node=%s status=%u age_ms=%llu last_dialog_token=%u\n",
+		    "bss transition response received sta=" MAC_ADDR_FMT " node=%s status=%u (%s) age_ms=%llu last_dialog_token=%u\n",
 		    MAC_ADDR_DATA(si->sta->addr), usteer_node_name(&ln->node),
 		    si->bss_transition_response.status_code,
+		    usteer_bss_tm_status_name(si->bss_transition_response.status_code),
 		    (unsigned long long) age_ms,
 		    si->bss_transition_request_dialog_token);
 	} else {
 		MSG(VERBOSE,
-		    "bss transition response received sta=" MAC_ADDR_FMT " node=%s status=%u age_ms=unknown\n",
+		    "bss transition response received sta=" MAC_ADDR_FMT " node=%s status=%u (%s) age_ms=unknown\n",
 		    MAC_ADDR_DATA(si->sta->addr), usteer_node_name(&ln->node),
-		    si->bss_transition_response.status_code);
+		    si->bss_transition_response.status_code,
+		    usteer_bss_tm_status_name(si->bss_transition_response.status_code));
 	}
 
 	if (si->bss_transition_response.status_code && si->kick_time && si->sta->aggressiveness) {
 		/* Cancel imminent kick in case BSS transition was rejected */
 		si->kick_time = 0;
-		MSG(VERBOSE, "Kick canceled because transition rejected by station " MAC_ADDR_FMT "\n", MAC_ADDR_DATA(si->sta->addr));
+		MSG(VERBOSE, "Kick canceled because transition rejected by station " MAC_ADDR_FMT " (%s)\n",
+		    MAC_ADDR_DATA(si->sta->addr),
+		    usteer_bss_tm_status_name(si->bss_transition_response.status_code));
 	}
 
 	return 0;

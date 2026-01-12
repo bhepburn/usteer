@@ -27,12 +27,26 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <libubox/blobmsg_json.h>
+
 #include "usteer.h"
 #include "node.h"
 #include "event.h"
 
 static struct blob_buf b;
 static KVLIST(host_info, kvlist_blob_len);
+
+static void
+usteer_log_blob_json(const char *label, const void *msg)
+{
+	char *json = blobmsg_format_json(msg, true);
+
+	if (!json)
+		return;
+
+	MSG(DEBUG, "%s %s\n", label, json);
+	free(json);
+}
 
 static void
 usteer_hex2bin(const char *hex, uint8_t *bin, int len)
@@ -791,13 +805,15 @@ int usteer_ubus_bss_transition_request(struct sta_info *si,
                                        struct usteer_node *target_node)
 {
 	struct usteer_local_node *ln = container_of(si->node, struct usteer_local_node, node);
+	const uint32_t mbo_reason = 5;
 	int neighbors = 0;
 	int ret;
 
 	MSG(DEBUG,
-	    "bss transition request build: sta=" MAC_ADDR_FMT " node=%s dialog_token=%u disassoc_imminent=%u disassoc_timer=%u abridged=%u validity=%u mbo=%u\n",
+	    "bss transition request build: sta=" MAC_ADDR_FMT " node=%s dialog_token=%u disassoc_imminent=%u disassoc_timer=%u abridged=%u validity=%u sta_mbo=%u mbo_reason=%u rrm=%u signal=%d\n",
 	    MAC_ADDR_DATA(si->sta->addr), usteer_node_name(&ln->node), dialog_token,
-	    disassoc_imminent, disassoc_timer, abridged, validity_period, si->mbo);
+	    disassoc_imminent, disassoc_timer, abridged, validity_period, si->mbo,
+	    mbo_reason, si->rrm, si->signal);
 
 	blob_buf_init(&b, 0);
 	blobmsg_printf(&b, "addr", MAC_ADDR_FMT, MAC_ADDR_DATA(si->sta->addr));
@@ -809,8 +825,7 @@ int usteer_ubus_bss_transition_request(struct sta_info *si,
 	}
 	blobmsg_add_u8(&b, "abridged", abridged);
 	blobmsg_add_u32(&b, "validity_period", validity_period);
-	if (si->mbo)
-		blobmsg_add_u32(&b, "mbo_reason", 5);
+	blobmsg_add_u32(&b, "mbo_reason", mbo_reason);
 	blobmsg_add_u8(&b, "disassoc", false);
 
 	if (!target_node) {
@@ -826,6 +841,7 @@ int usteer_ubus_bss_transition_request(struct sta_info *si,
 	    neighbors, MAC_ADDR_DATA(si->sta->addr), usteer_node_name(&ln->node));
 	MSG(VERBOSE, "bss transition request sending sta=" MAC_ADDR_FMT " node=%s\n",
 	    MAC_ADDR_DATA(si->sta->addr), usteer_node_name(&ln->node));
+	usteer_log_blob_json("bss transition request payload:", b.head);
 
 	ret = ubus_invoke(ubus_ctx, ln->obj_id, "bss_transition_request", b.head, NULL, 0, 100);
 	if (ret) {
@@ -849,15 +865,17 @@ int usteer_ubus_band_steering_request(struct sta_info *si,
                                       uint8_t validity_period)
 {
 	struct usteer_local_node *ln = container_of(si->node, struct usteer_local_node, node);
+	const uint32_t mbo_reason = 5;
 	struct usteer_node *node;
 	void *c;
 	int neighbors = 0;
 	int ret;
 
 	MSG(DEBUG,
-	    "band steering request build: sta=" MAC_ADDR_FMT " node=%s dialog_token=%u disassoc_imminent=%u disassoc_timer=%u abridged=%u validity=%u mbo=%u\n",
+	    "band steering request build: sta=" MAC_ADDR_FMT " node=%s dialog_token=%u disassoc_imminent=%u disassoc_timer=%u abridged=%u validity=%u sta_mbo=%u mbo_reason=%u rrm=%u signal=%d\n",
 	    MAC_ADDR_DATA(si->sta->addr), usteer_node_name(&ln->node), dialog_token,
-	    disassoc_imminent, disassoc_timer, abridged, validity_period, si->mbo);
+	    disassoc_imminent, disassoc_timer, abridged, validity_period, si->mbo,
+	    mbo_reason, si->rrm, si->signal);
 
 	blob_buf_init(&b, 0);
 	blobmsg_printf(&b, "addr", MAC_ADDR_FMT, MAC_ADDR_DATA(si->sta->addr));
@@ -869,8 +887,7 @@ int usteer_ubus_band_steering_request(struct sta_info *si,
 	}
 	blobmsg_add_u8(&b, "abridged", abridged);
 	blobmsg_add_u32(&b, "validity_period", validity_period);
-	if (si->mbo)
-		blobmsg_add_u32(&b, "mbo_reason", 5);
+	blobmsg_add_u32(&b, "mbo_reason", mbo_reason);
 	blobmsg_add_u8(&b, "disassoc", false);
 
 	c = blobmsg_open_array(&b, "neighbors");
@@ -887,6 +904,7 @@ int usteer_ubus_band_steering_request(struct sta_info *si,
 		MSG(VERBOSE, "band steering station " MAC_ADDR_FMT " disassociation timer %u, signal %d\n", MAC_ADDR_DATA(si->sta->addr), disassoc_timer, si->signal);
 		MSG(VERBOSE, "band steering request sending sta=" MAC_ADDR_FMT " node=%s neighbors=%d\n",
 		    MAC_ADDR_DATA(si->sta->addr), usteer_node_name(&ln->node), neighbors);
+		usteer_log_blob_json("band steering request payload:", b.head);
 		ret = ubus_invoke(ubus_ctx, ln->obj_id, "bss_transition_request", b.head, NULL, 0, 100);
 		if (ret) {
 			MSG(INFO, "band steering request failed sta=" MAC_ADDR_FMT " node=%s ret=%d\n",

@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=usteer
-PKG_VERSION:=PKG_VERSION:=$(shell git show -s --format=%cd --date=short | tr '-' '.')
+PKG_VERSION:=$(shell date "+%Y.%m.%d")
 PKG_RELEASE:=1
 
 PKG_BUILD_DEPENDS:=libpcap

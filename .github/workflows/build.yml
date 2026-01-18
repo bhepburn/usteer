@@ -32,7 +32,7 @@ jobs:
           fetch-depth: 0
 
       - name: Build
-        uses: openwrt/gh-action-sdk@main
+        uses: openwrt/gh-action-sdk@v7
         env:
           ARCH: ${{ matrix.arch }}-${{ github.event.inputs.openwrt_version }}
           V: sc

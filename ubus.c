@@ -37,7 +37,7 @@ static struct blob_buf b;
 static KVLIST(host_info, kvlist_blob_len);
 
 static void
-usteer_log_blob_json(const char *label, const void *msg)
+usteer_log_blob_json(const char *label, struct blob_attr *msg)
 {
 	char *json = blobmsg_format_json(msg, true);
 

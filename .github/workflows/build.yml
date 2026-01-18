@@ -8,6 +8,11 @@ on:
        default: '24.10.0'
        required: true
        type: string
+      openwrt_arch:
+       description: 'OpenWrt architecture'
+       default: 'arm_cortex-a7_neon-vfpv4'
+       required: true
+       type: string
   
 env:
   CARGO_TERM_COLOR: always
@@ -19,7 +24,7 @@ jobs:
     strategy:
       matrix:
         arch:
-          - arm_cortex-a7_neon-vfpv4
+          - ${{ github.event.inputs.openwrt_arch }}
 
     steps:
       - uses: actions/checkout@v4

@@ -5,7 +5,7 @@ on:
     inputs:
       openwrt_version:
        description: 'OpenWrt version'
-       default: 'main'
+       default: '24.10.0'
        required: true
        type: string
   
@@ -19,7 +19,7 @@ jobs:
     strategy:
       matrix:
         arch:
-          - aarch64_cortex-a53
+          - arm_cortex-a7_neon-vfpv4
 
     steps:
       - uses: actions/checkout@v4
@@ -32,7 +32,6 @@ jobs:
           ARCH: ${{ matrix.arch }}-${{ github.event.inputs.openwrt_version }}
           V: sc
           PACKAGES: usteer luci-app-usteer
-          CONFIG_PACKAGE_FORMAT_APK: y
 
       - name: List outputs
         run: |
@@ -41,7 +40,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: ls-${{ matrix.arch }}
-          path: bin/packages/${{ matrix.arch }}/action/*.apk
+          path: bin/packages/${{ matrix.arch }}/action/*.ipk
 
   release:
 
@@ -53,14 +52,14 @@ jobs:
     
       - uses: actions/download-artifact@v4
         with:
-          path: apks
+          path: ipks
           pattern: ls-*
           merge-multiple: true
           
       - name: List outputs
         id: list
         run: |
-          v=$(ls apks/usteer_*.apk | head -n 1 | awk -F"_" '{print $2}')
+          v=$(ls ipks/usteer_*.ipk | head -n 1 | awk -F"_" '{print $2}')
           echo "usteer_version=$v" >> "$GITHUB_OUTPUT"
           echo "usteer_version_tag=${v//[^A-Za-z0-9._-]/-}" >> "$GITHUB_OUTPUT"
     
@@ -73,4 +72,4 @@ jobs:
             usteer v${{ steps.list.outputs.usteer_version }}
             OpenWrt ${{ github.event.inputs.openwrt_version }} build
           files: |
-            apks/*
+            ipks/*
